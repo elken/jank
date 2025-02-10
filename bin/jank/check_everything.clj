@@ -34,27 +34,28 @@
                  false))]
     (if-not apt?
       (util/log-warning "Skipping dependency install, since we don't have apt-get")
-      (do
-        ; Install deps required for running our tests.
-        (util/quiet-shell {} "sudo apt-get install -y default-jdk software-properties-common lsb-release npm lcov leiningen")
-        ; TODO: Enable once we're linting Clojure/jank again.
-        ;(util/quiet-shell {} "sudo npm install --global @chrisoakman/standard-clojure-style")
+      ;; (do
+      ;;   ; Install deps required for running our tests.
+      ;;   (util/quiet-shell {} "sudo apt-get install -y default-jdk software-properties-common lsb-release npm lcov leiningen")
+      ;;   ; TODO: Enable once we're linting Clojure/jank again.
+      ;;   ;(util/quiet-shell {} "sudo npm install --global @chrisoakman/standard-clojure-style")
 
-        ; Install jank's build deps.
-        (util/quiet-shell {} (os->deps-cmd "Linux"))
+      ;;   ; Install jank's build deps.
+      ;;   (util/quiet-shell {} (os->deps-cmd "Linux"))
 
-        ; Install Clang/LLVM.
-        (util/quiet-shell {} "curl -L -O https://apt.llvm.org/llvm.sh")
-        (util/quiet-shell {} "chmod +x llvm.sh")
-        (util/quiet-shell {} (str "sudo ./llvm.sh " util/llvm-version " all"))
-        ; The libc++abi headers conflict with the system headers:
-        ; https://github.com/llvm/llvm-project/issues/121300
-        (util/quiet-shell {} (str "sudo apt-get remove -y libc++abi-" util/llvm-version "-dev"))
+      ;;   ; Install Clang/LLVM.
+      ;;   (util/quiet-shell {} "curl -L -O https://apt.llvm.org/llvm.sh")
+      ;;   (util/quiet-shell {} "chmod +x llvm.sh")
+      ;;   (util/quiet-shell {} (str "sudo ./llvm.sh " util/llvm-version " all"))
+      ;;   ; The libc++abi headers conflict with the system headers:
+      ;;   ; https://github.com/llvm/llvm-project/issues/121300
+      ;;   (util/quiet-shell {} (str "sudo apt-get remove -y libc++abi-" util/llvm-version "-dev"))
 
-        ; Install the new Clojure CLI.
-        (util/quiet-shell {} "curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh")
-        (util/quiet-shell {} "chmod +x linux-install.sh")
-        (util/quiet-shell {} "sudo ./linux-install.sh")))))
+      ;;   ; Install the new Clojure CLI.
+      ;;   (util/quiet-shell {} "curl -L -O https://github.com/clojure/brew-install/releases/latest/download/linux-install.sh")
+      ;;   (util/quiet-shell {} "chmod +x linux-install.sh")
+      ;;   (util/quiet-shell {} "sudo ./linux-install.sh"))
+      )))
 
 (defmethod install-deps "Mac OS X" []
   (util/quiet-shell {:extra-env {"HOMEBREW_NO_AUTO_UPDATE" "1"}}

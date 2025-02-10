@@ -1,0 +1,75 @@
+name: "Build (Ubuntu)"
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: lint
+            lint: true
+          - name: clang-tidy + coverage
+            build_type: Debug
+            sanitize: none
+            coverage: on
+            analyze: on
+          - name: address sanitizer
+            build_type: Debug
+            sanitize: address
+          - name: undefined behavior sanitizer
+            build_type: Debug
+            sanitize: undefined
+          - name: thread sanitizer
+            build_type: Debug
+            sanitize: thread
+          - name: release
+            build_type: Release
+            sanitize: none
+    runs-on: ubuntu-latest
+    container: ubuntu:24.10
+    name: Ubuntu - ${{ matrix.name }}
+    env:
+      JANK_MATRIX_ID: ubuntu-${{ matrix.build_type }}-${{ matrix.sanitize }}
+      JANK_BUILD_TYPE: ${{ matrix.build_type }}
+      JANK_LINT: ${{ matrix.lint }}
+      JANK_COVERAGE: ${{ matrix.coverage }}
+      JANK_ANALYZE: ${{ matrix.analyze }}
+      JANK_SANITIZE: ${{ matrix.sanitize }}
+      ASAN_OPTIONS: detect_leaks=0
+      TERM: xterm
+      LC_CTYPE: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+    timeout-minutes: 30
+    steps:
+      - uses: gerlero/apt-install@v1
+        with:
+          packages: leiningen lcov lsb-release sudo npm curl git git-lfs zip build-essential libssl-dev libdouble-conversion-dev pkg-config ninja-build cmake zlib1g-dev libffi-dev libzip-dev libbz2-dev doctest-dev libboost-all-dev clang-19 libgc-dev libllvmlibc-19-dev libclang-19-dev libssl-dev clang-format clang-tidy locales
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install java
+        uses: actions/setup-java@v4.4.0
+        with:
+          distribution: "temurin"
+          java-version: "11.0.20+8"
+
+      - name: Install clojure & bb
+        uses: DeLaGuardo/setup-clojure@master
+        with:
+          cli: "1.12.0.1517"
+          bb: "latest"
+
+      - name: Build and test
+        run: |
+          echo "$LANG UTF-8" >> /etc/locale.gen
+          echo "LANG=$LANG" > /etc/locale.conf
+
+          sudo locale-gen en_US.UTF-8
+          ./bin/jank/check_everything.clj

@@ -1,0 +1,76 @@
+name: "Build (macOS)"
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-13, macos-15]
+        include:
+          # - name: lint
+          #   lint: true
+          # - name: clang-tidy + coverage
+          #   build_type: Debug
+          #   sanitize: none
+          #   coverage: on
+          #   analyze: on
+          # - name: address sanitizer
+          #   build_type: Debug
+          #   sanitize: address
+          # - name: undefined sanitizer
+          #   build_type: Debug
+          #   sanitize: undefined
+          # - name: thread sanitizer
+          #   build_type: Debug
+          #   sanitize: thread
+          - name: release
+            build_type: Release
+            sanitize: none
+    runs-on: ${{ matrix.os }}
+    name: ${{ matrix.os }} - ${{ matrix.name }} (${{ matrix.build_type}})
+    env:
+      JANK_MATRIX_ID: ${{ matrix.os }}-${{ matrix.build_type }}-${{ matrix.sanitize }}
+      JANK_BUILD_TYPE: ${{ matrix.build_type }}
+      JANK_LINT: ${{ matrix.lint }}
+      JANK_COVERAGE: ${{ matrix.coverage }}
+      JANK_ANALYZE: ${{ matrix.analyze }}
+      JANK_SANITIZE: ${{ matrix.sanitize }}
+      ASAN_OPTIONS: detect_leaks=0
+      TERM: xterm
+      LC_CTYPE: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+    timeout-minutes: 30
+    steps:
+      - uses: gerlero/brew-install@v1
+        with:
+          packages: zip double-conversion ninja zlib doctest boost lbzip2 llvm@19 clang-format bdw-gc
+
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install java
+        uses: actions/setup-java@v4.4.0
+        with:
+          distribution: "temurin"
+          java-version: "11.0.20+8"
+
+      - name: Install clojure & bb
+        uses: DeLaGuardo/setup-clojure@master
+        with:
+          cli: "1.12.0.1517"
+          bb: "latest"
+
+      - name: Build and test
+        run: |
+          export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
+          export PATH="$(brew --prefix)/opt/llvm/bin:${PATH}"
+          export LDFLAGS="-Wl,-rpath,$(brew --prefix)/opt/llvm/lib ${LDFLAGS}"
+          export CPPFLAGS="-I$(brew --prefix)/opt/llvm/include ${CPPFLAGS}"
+
+          ./bin/jank/check_everything.clj
