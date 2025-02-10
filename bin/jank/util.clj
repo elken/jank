@@ -42,10 +42,10 @@
     (summary/log s)))
 
 (defn log-info [& args]
-  (log "🛈 " (apply str args)))
+  (log "ⓘ " (apply str args)))
 
 (defn log-info-with-time [time-ms & args]
-  (log "🛈 " (apply str args) (str "(" (format-ms time-ms) ")")))
+  (log "ⓘ " (apply str args) (str "(" (format-ms time-ms) ")")))
 
 (defn log-warning [& args]
   (log "⚠ " (apply str args)))
